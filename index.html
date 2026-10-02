@@ -567,24 +567,25 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
     if(z!=='tak') usunPoPrefiksie(function(n){ return n==='_ga' || n.indexOf('_ga_')===0; });
   }
 
-  /* Pixel Meta, ten sam pomysł: „revoke” domyślnie (ogranicza dane do zbiorczych, bez cookies), „grant” po zgodzie. */
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
+  /* Pixel Meta: u Meta „revoke” blokuje każde zdarzenie do samego „grant” (sprawdzone w dokumentacji
+     02.10.2026), więc w odróżnieniu od Google nie ma tu pośredniego trybu z zanonimizowanym sygnałem.
+     Instalacja więc najprostsza możliwa: skrypt startuje dopiero po zgodzie. */
   function startPixel(){
     if(!PIXEL_ID || window.horPixelStarted) return; window.horPixelStarted=true;
-    fbq('consent','revoke');
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', PIXEL_ID);
     fbq('track', 'PageView');
   }
   function zgodaPixel(z){
-    fbq('consent', z==='tak' ? 'grant' : 'revoke');
-    if(z!=='tak') usunPoPrefiksie(function(n){ return n==='_fbp' || n==='_fbc'; });
+    if(z==='tak') startPixel();
+    else usunPoPrefiksie(function(n){ return n==='_fbp' || n==='_fbc'; });
   }
 
-  startGA(); startPixel();
+  startGA();
   if(box){
     box.addEventListener('click',function(e){
       var b=e.target.closest ? e.target.closest('[data-zgoda]') : null;
