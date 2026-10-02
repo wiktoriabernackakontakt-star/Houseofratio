@@ -344,9 +344,9 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
       <li>Data zapisu i adres IP w momencie zapisu (do celów dowodowych zgody)</li>
     </ul>
     <h4>Statystyki odwiedzin (Google Analytics)</h4>
-    <p>Jeśli wyrazisz zgodę na pliki cookies, strona korzysta z Google Analytics. Narzędzie zbiera informacje o tym, jak korzystasz ze strony: które podstrony odwiedzasz, jak długo na nich zostajesz, z jakiego urządzenia i przeglądarki korzystasz, z jakiego kraju lub miasta się łączysz (w przybliżeniu) i skąd trafiasz na stronę. Google Analytics nie zapisuje adresów IP osób z Unii Europejskiej: adres służy wyłącznie do ustalenia przybliżonej lokalizacji i jest od razu usuwany.</p>
+    <p>Strona korzysta z Google Analytics. Dopóki nie wyrazisz zgody na pliki cookies, narzędzie nie zapisuje w Twojej przeglądarce żadnych identyfikujących Cię plików i nie łączy wizyty z Tobą: wysyła wyłącznie zbiorczy, anonimowy sygnał o samej wizycie, używany do statystycznego szacowania ruchu na stronie (tzw. Google Consent Mode). Jeśli wyrazisz zgodę, Google Analytics zbiera pełne informacje o tym, jak korzystasz ze strony: które podstrony odwiedzasz, jak długo na nich zostajesz, z jakiego urządzenia i przeglądarki korzystasz, z jakiego kraju lub miasta się łączysz (w przybliżeniu) i skąd trafiasz na stronę. Google Analytics nie zapisuje adresów IP osób z Unii Europejskiej: adres służy wyłącznie do ustalenia przybliżonej lokalizacji i jest od razu usuwany.</p>
     <h4>Pomiar skuteczności reklam (Pixel Meta)</h4>
-    <p>Jeśli wyrazisz zgodę na pliki cookies, strona korzysta też z Pixela Meta (Facebook, Instagram). Narzędzie zapisuje informację o Twojej wizycie na stronie i łączy ją z Twoim kontem Meta, jeśli jesteś zalogowana lub zalogowany w serwisach Facebook albo Instagram, żeby zmierzyć, czy reklama, którą zobaczyłaś lub zobaczyłeś, doprowadziła do wizyty na stronie.</p>
+    <p>Strona korzysta też z Pixela Meta (Facebook, Instagram). Dopóki nie wyrazisz zgody na pliki cookies, narzędzie działa w ograniczonym trybie: nie zapisuje w Twojej przeglądarce identyfikujących Cię plików i nie łączy wizyty z Twoim kontem Meta, wysyła tylko zbiorczy sygnał bez danych osobowych. Jeśli wyrazisz zgodę, Pixel zapisuje informację o Twojej wizycie na stronie i łączy ją z Twoim kontem Meta, jeśli jesteś zalogowana lub zalogowany w serwisach Facebook albo Instagram, żeby zmierzyć, czy reklama, którą zobaczyłaś lub zobaczyłeś, doprowadziła do wizyty na stronie.</p>
     <h4>Dane techniczne</h4>
     <p>Serwer, na którym działa strona, zapisuje w logach dane techniczne wizyty: adres IP, typ przeglądarki, system operacyjny i czas wizyty. Logi służą do zapewnienia bezpieczeństwa i prawidłowego działania strony.</p>
 
@@ -402,7 +402,7 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
 
     <h3>8. Pliki cookies</h3>
     <p>Pliki cookies to małe pliki zapisywane w Twojej przeglądarce. Strona houseofratio.pl używa analitycznych plików cookies Google Analytics i plików cookies Pixela Meta, i zapisuje je tylko wtedy, gdy wyrazisz na to zgodę.</p>
-    <p>Przy pierwszej wizycie strona pyta o zgodę w okienku na dole ekranu. Dopóki jej nie wyrazisz, Google Analytics i Pixel Meta się nie uruchamiają. Odmowa nie ogranicza korzystania ze strony.</p>
+    <p>Przy pierwszej wizycie strona pyta o zgodę w okienku na dole ekranu. Dopóki jej nie wyrazisz, Google Analytics i Pixel Meta nie zapisują w Twojej przeglądarce żadnych plików opisanych niżej i nie łączą wizyty z Tobą; wysyłają tylko zbiorczy, anonimowy sygnał o samej wizycie. Odmowa nie ogranicza korzystania ze strony.</p>
     <ul>
       <li>_ga: rozróżnia osoby odwiedzające stronę, wygasa po 2 latach.</li>
       <li>_ga_&lt;identyfikator&gt;: zapamiętuje stan sesji, wygasa po 2 latach.</li>
@@ -528,13 +528,15 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
   if(pol){ pol.querySelector('.policy__back').addEventListener('click',function(){ pol.close(); }); }
 })();
 
-/* Zgoda na cookies: Google Analytics i Pixel Meta ruszają dopiero po „Akceptuję”, decyzja zostaje w przeglądarce na 12 miesięcy */
+/* Zgoda na cookies, w trybie „Consent Mode”: Google i Meta wczytują się od razu, ale bez identyfikujących
+   cookies i bez łączenia z Tobą, dopóki nie klikniesz „Akceptuję”, to ogranicza utratę danych od osób,
+   które nie podejmą decyzji, bez zbierania identyfikujących danych bez zgody. Decyzja z bannera zostaje
+   w przeglądarce na 12 miesięcy. */
 (function(){
   var GA_ID=''; // identyfikator pomiaru z Google Analytics (G-...), wpisywany przy wdrożeniu strony; pusty = Analytics się nie ładuje
   var PIXEL_ID='1383530303494170'; // Pixel Meta, podała 02.10.2026
   var KEY='hor-cookies', ROK=365*864e5;
   var box=document.getElementById('cookies');
-  if(!box) return;
   function usunPoPrefiksie(dopuszczony){
     try{
       var host=location.hostname.split('.');
@@ -548,41 +550,53 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
   }
   function read(){ try{ var v=JSON.parse(localStorage.getItem(KEY)); if(v && Date.now()-v.t<ROK) return v.zgoda; }catch(e){} return null; }
   function save(z){ try{ localStorage.setItem(KEY,JSON.stringify({zgoda:z,t:Date.now()})); }catch(e){} }
-  function loadGA(){
-    if(!GA_ID) return;
-    window['ga-disable-'+GA_ID]=false;
-    if(window.gtag) return;
+
+  /* Google Consent Mode (advanced): domyślnie „denied”, tag i tak wysyła zanonimizowane sygnały do
+     modelowania statystyk; pełne, z cookies, dopiero po „granted”. */
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=window.gtag||function(){ window.dataLayer.push(arguments); };
+  gtag('consent','default',{ad_storage:'denied',analytics_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+  function startGA(){
+    if(!GA_ID || window.horGaStarted) return; window.horGaStarted=true;
     var s=document.createElement('script'); s.async=true; s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID; document.head.appendChild(s);
-    window.dataLayer=window.dataLayer||[]; window.gtag=function(){ window.dataLayer.push(arguments); };
-    window.gtag('js',new Date()); window.gtag('config',GA_ID);
+    gtag('js',new Date()); gtag('config',GA_ID);
   }
-  function stopGA(){
-    if(GA_ID) window['ga-disable-'+GA_ID]=true;
-    usunPoPrefiksie(function(n){ return n==='_ga' || n.indexOf('_ga_')===0; });
+  function zgodaGA(z){
+    var v=z==='tak'?'granted':'denied';
+    gtag('consent','update',{ad_storage:v,analytics_storage:v,ad_user_data:v,ad_personalization:v});
+    if(z!=='tak') usunPoPrefiksie(function(n){ return n==='_ga' || n.indexOf('_ga_')===0; });
   }
-  function loadPixel(){
-    if(!PIXEL_ID || window.fbq) return;
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
+
+  /* Pixel Meta, ten sam pomysł: „revoke” domyślnie (ogranicza dane do zbiorczych, bez cookies), „grant” po zgodzie. */
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  function startPixel(){
+    if(!PIXEL_ID || window.horPixelStarted) return; window.horPixelStarted=true;
+    fbq('consent','revoke');
     fbq('init', PIXEL_ID);
     fbq('track', 'PageView');
   }
-  function stopPixel(){
-    usunPoPrefiksie(function(n){ return n==='_fbp' || n==='_fbc'; });
+  function zgodaPixel(z){
+    fbq('consent', z==='tak' ? 'grant' : 'revoke');
+    if(z!=='tak') usunPoPrefiksie(function(n){ return n==='_fbp' || n==='_fbc'; });
   }
-  box.addEventListener('click',function(e){
-    var b=e.target.closest ? e.target.closest('[data-zgoda]') : null;
-    if(!b) return;
-    var z=b.getAttribute('data-zgoda');
-    save(z); box.hidden=true;
-    if(z==='tak'){ loadGA(); loadPixel(); } else { stopGA(); stopPixel(); }
-  });
-  window.horCookies=function(){ box.hidden=false; };
-  var z=read();
-  if(z==='tak'){ loadGA(); loadPixel(); } else if(z!=='nie') box.hidden=false;
+
+  startGA(); startPixel();
+  if(box){
+    box.addEventListener('click',function(e){
+      var b=e.target.closest ? e.target.closest('[data-zgoda]') : null;
+      if(!b) return;
+      var z=b.getAttribute('data-zgoda');
+      save(z); box.hidden=true;
+      zgodaGA(z); zgodaPixel(z);
+    });
+    window.horCookies=function(){ box.hidden=false; };
+    var z=read();
+    if(z==='tak' || z==='nie'){ zgodaGA(z); zgodaPixel(z); } else { box.hidden=false; }
+  }
 })();
 </script>
 </body>
