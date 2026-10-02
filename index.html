@@ -139,9 +139,15 @@ a{color:inherit}
 .consent{display:flex;gap:.75rem;align-items:flex-start;font-size:.875rem;line-height:1.55;color:var(--muted)}
 .consent input{margin-top:.2rem;accent-color:var(--oliwka);width:1.05rem;height:1.05rem;flex:none}
 .btn--form{background:var(--czern);color:var(--krem);justify-self:center;margin-top:.5rem}
-.sent{font-family:var(--text);font-weight:400;font-size:clamp(1.75rem, 3vw, 2.5rem);line-height:1.3;margin:clamp(3rem, 6vw, 4.5rem) 0 0;text-align:center}
-.sent--blad{font-size:1.0625rem;color:var(--muted)}
 .hp{position:absolute;left:-9999px}
+/* Potwierdzenie wysłania formularza: wyskakujące okienko na wierzchu strony, nie tekst pod formularzem */
+.confirm{width:min(26rem, 100% - 2 * var(--gutter));margin:auto;padding:clamp(2rem, 5vw, 2.75rem);border:0;border-radius:24px;background:var(--krem);color:var(--ink);box-shadow:0 34px 60px -24px rgb(20 20 15 / .35)}
+.confirm::backdrop{background:rgb(20 20 15 / .55)}
+.confirm[open]{animation:policy-in .4s cubic-bezier(.2,.7,.2,1)}
+.confirm h3{font-family:var(--display);font-weight:400;font-size:clamp(2rem, 5vw, 2.75rem);line-height:1.15;margin:0}
+.confirm h3:focus{outline:none}
+.confirm p{margin:.75rem 0 0;color:var(--muted);line-height:1.6}
+.confirm__close{margin-top:1.75rem}
 
 /* STOPKA: wąski pasek */
 .foot{background:var(--czern);color:var(--krem);font-size:.8125rem}
@@ -281,8 +287,11 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
         </label>
         <button class="btn btn--form" type="submit">Wyślij</button>
       </form>
-      <p class="sent" id="form-sent" role="status" hidden>Dostałam.</p>
-      <p class="sent sent--blad" id="form-blad" role="status" hidden>Coś nie zadziałało. Napisz prosto na <a href="mailto:wiktoria@houseofratio.pl">wiktoria@houseofratio.pl</a>.</p>
+      <dialog class="confirm" id="confirm-dialog">
+        <h3 id="confirm-heading" tabindex="-1"></h3>
+        <p id="confirm-text"></p>
+        <button class="btn btn--form confirm__close" type="button">Zamknij</button>
+      </dialog>
     </div>
   </section>
 </main>
@@ -406,16 +415,26 @@ section[tabindex="-1"]:focus,.policy__doc h2:focus{outline:none}
 <script>
 (function(){
   var form=document.getElementById('form-kontakt');
-  var sent=document.getElementById('form-sent');
-  var blad=document.getElementById('form-blad');
+  var dlg=document.getElementById('confirm-dialog');
+  var heading=document.getElementById('confirm-heading');
+  var text=document.getElementById('confirm-text');
+  function showConfirm(ok){
+    heading.textContent=ok?'Dostałam.':'Nie wyszło.';
+    text.innerHTML=ok?'Odpiszę, jak będę mogła.':'Coś nie zadziałało. Napisz prosto na <a href="mailto:wiktoria@houseofratio.pl">wiktoria@houseofratio.pl</a>.';
+    dlg.showModal();
+    heading.focus();
+  }
+  dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+  dlg.querySelector('.confirm__close').addEventListener('click',function(){ dlg.close(); });
   /* Formularz wysyła się do Netlify Forms (zgłoszenia trafiają na wiktoria@houseofratio.pl).
-     Bez przeładowania strony: wysyłka w tle, „Dostałam.” po sukcesie. */
+     Bez przeładowania strony: wysyłka w tle, po sukcesie wyskakujące okienko i wyczyszczone pola,
+     żeby było jasne, że wiadomość poszła, zanim ktoś zdąży się zastanawiać. */
   form.addEventListener('submit',function(e){
     e.preventDefault();
     if(!form.checkValidity()){form.reportValidity();return;}
     fetch('/', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams(new FormData(form)).toString()})
-      .then(function(r){ if(!r.ok) throw new Error(); form.hidden=true; sent.hidden=false; })
-      .catch(function(){ blad.hidden=false; });
+      .then(function(r){ if(!r.ok) throw new Error(); form.reset(); showConfirm(true); })
+      .catch(function(){ showConfirm(false); });
   });
 })();
 
