@@ -1,4 +1,4 @@
-<svg width="340" height="340" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="cropR"><rect x="90" y="0" width="240" height="340"/></clipPath></defs><rect width="340" height="340" fill="#14140F"/><g transform="translate(-40.0,0.0)"><g clip-path="url(#cropR)">
+<svg width="340" height="340" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="cropR"><rect x="90" y="0" width="240" height="340"/></clipPath></defs><rect width="340" height="340" fill="#60712F"/><g transform="translate(-40.0,0.0)"><g clip-path="url(#cropR)">
 <g clip-path="url(#clip0_145_97)">
 <mask id="mask0_145_97" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="1095" height="340">
 <path d="M1095 0H0V340H1095V0Z" fill="white"/>
